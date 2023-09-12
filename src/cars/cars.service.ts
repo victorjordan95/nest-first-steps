@@ -1,6 +1,11 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { Car } from './interfaces/car.interface';
 import { v4 as uuid } from 'uuid';
+import { CreateCarDTO, UpdateCarDTO } from './dto';
 
 @Injectable()
 export class CarsService {
@@ -34,7 +39,38 @@ export class CarsService {
     return car;
   }
 
-  createCar() {
-    return 'This action adds a new car';
+  createCar(createCarDTO: CreateCarDTO) {
+    const newCar: Car = {
+      id: uuid(),
+      ...createCarDTO,
+    };
+
+    this.cars.push(newCar);
+
+    return newCar;
+  }
+
+  updateCar(id: string, updateCarDto: UpdateCarDTO) {
+    const car = this.getCarById(id);
+
+    if (updateCarDto.id && updateCarDto.id !== car.id) {
+      throw new BadRequestException('Car id is not allowed to change');
+    }
+
+    const updatedCar = {
+      ...car,
+      ...updateCarDto,
+    };
+
+    this.cars = this.cars.map((car) => (car.id === id ? updatedCar : car));
+
+    return updatedCar;
+  }
+
+  deleteCar(id: string) {
+    this.getCarById(id);
+    this.cars = this.cars.filter((car) => car.id !== id);
+
+    return `Car with id ${id} deleted`;
   }
 }
